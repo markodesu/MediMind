@@ -1,6 +1,14 @@
-__pycache__/
+# Python
 venv/
-node_modules/
-.env
+__pycache__/
 *.pyc
-*.pt
+
+# Node / React
+frontend/node_modules
+dist/
+
+# OS files
+.DS_Store
+
+# Environment
+.env
