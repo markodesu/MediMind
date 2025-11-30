@@ -12,3 +12,16 @@ dist/
 
 # Environment
 .env
+
+# Model files (large binary files)
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+*.pth
+*.h5
+
+# Dataset cache
+data/cache/
+backend/app/data/cache/
+**/cache/

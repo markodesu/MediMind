@@ -3,5 +3,8 @@ uvicorn[standard]
 transformers
 torch
 pydantic
+pydantic-settings
 python-multipart
+python-dotenv
 requests
+datasets

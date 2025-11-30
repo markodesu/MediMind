@@ -1,0 +1,15 @@
+# Git LFS for large model files
+models/**/*.bin filter=lfs diff=lfs merge=lfs -text
+models/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+models/**/*.pt filter=lfs diff=lfs merge=lfs -text
+models/**/*.pth filter=lfs diff=lfs merge=lfs -text
+models/**/*.ckpt filter=lfs diff=lfs merge=lfs -text
+models/**/*.h5 filter=lfs diff=lfs merge=lfs -text
+
+# Keep config and tokenizer files as regular files
+models/**/*.json text
+models/**/*.txt text
+models/**/*.yaml text
+models/**/*.yml text
+models/**/*.config text
+

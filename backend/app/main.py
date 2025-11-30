@@ -1,18 +1,11 @@
 from fastapi import FastAPI
-from model import generate_response
-from schemas import ChatRequest
+from app.routers.chat import router as chat_router
 
 app = FastAPI()
 
-@app.get("/")
-def home():
-    return {"message": "MediMind API is running!"}
+app.include_router(chat_router, prefix="/api/v1")
 
-@app.post("/chat")
-async def chat(request: ChatRequest):
-    response, confidence = generate_response(request.question)
-    return {
-        "answer": response,
-        "confidence": confidence,
-        "safe": confidence > 0.6
-    }
+# Add a root endpoint
+@app.get("/")
+async def root():
+    return {"message": "MediMind backend is running!"}
