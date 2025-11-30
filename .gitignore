@@ -25,3 +25,7 @@ dist/
 data/cache/
 backend/app/data/cache/
 **/cache/
+
+# Raw dataset files (downloaded, not needed in repo)
+backend/app/data/raw_datasets/
+backend/app/data/*.zip
