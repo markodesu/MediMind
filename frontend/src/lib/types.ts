@@ -10,7 +10,7 @@ export interface Message {
 export interface ChatResponse {
   answer: string;
   confidence: number;
-  safe: boolean;
+  safe?: boolean; // Optional - backend may not always include this
 }
 
 export interface ChatRequest {
