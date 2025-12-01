@@ -16,8 +16,13 @@ class Settings(BaseSettings):
     CONFIDENCE_THRESHOLD: float = 0.6
     
     # API configuration
-    API_TITLE: str = "MediMind API"
+    API_TITLE: str = "MediMind API - University of Central Asia"
     API_VERSION: str = "1.0.0"
+    
+    # UCA Medical Services
+    UCA_MEDICAL_CONTACT_NAME: str = "Dr. Kyal"
+    UCA_MEDICAL_PHONE: str = "+996708136013"
+    UCA_MEDICAL_LOCATION: str = "1st floor, Academic Block, near GYM"
     
     # Knowledge base
     KNOWLEDGE_BASE_PATH: str = "app/knowledge_base/symptoms.json"
