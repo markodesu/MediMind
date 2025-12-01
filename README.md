@@ -4,10 +4,21 @@
 
 MediMind is an AI-powered health guidance chatbot designed specifically for UCA students and staff. When the system has low confidence in its response, it directs users to UCA's medical services.
 
+## 🤖 Intelligent Features
+
+MediMind implements **3 intelligent behaviors**:
+
+1. **✅ Language Understanding / Generation** - Natural language processing with phi-2 model
+2. **✅ Decision-Making** - Confidence-based routing to human professionals
+3. **✅ Prediction / Recommendation** - Medical advice generation with confidence scoring
+
+**📖 [See Detailed Documentation](docs/INTELLIGENT_FEATURES.md)** - Complete explanation with code evidence
+
 ## 📚 Documentation
 
 Complete documentation is available in the `docs/` directory:
 
+- **[Intelligent Features](docs/INTELLIGENT_FEATURES.md)** - Detailed AI behavior documentation ⭐
 - **[Quick Start Guide](docs/QUICK_START.md)** - Get started in 5 minutes
 - **[Training Guide](docs/TRAINING.md)** - Complete guide for fine-tuning the model
 - **[API Documentation](docs/API.md)** - Backend API endpoints and usage
@@ -15,6 +26,7 @@ Complete documentation is available in the `docs/` directory:
 
 ### Quick Links
 
+- 🤖 [Intelligent Features](docs/INTELLIGENT_FEATURES.md) - AI behaviors and code evidence
 - 🚀 [Quick Start](docs/QUICK_START.md) - Installation and setup
 - 🎓 [Training](docs/TRAINING.md) - Model fine-tuning guide
 - 📡 [API Reference](docs/API.md) - API endpoints and examples
@@ -134,3 +146,18 @@ Storage for AI model weights and configuration files. Use Git LFS for large mode
 - `POST /api/v1/chat` - Chat endpoint for medical questions
 
 See `/docs` for interactive API documentation when the server is running.
+
+## Verification
+
+To verify all intelligent features are working:
+
+```bash
+cd backend
+# Make sure backend is running first
+python -m app.verify_intelligent_features
+```
+
+This will test:
+- ✅ Language Understanding/Generation
+- ✅ Decision-Making
+- ✅ Prediction/Recommendation
