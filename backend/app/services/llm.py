@@ -16,7 +16,7 @@ def load_model():
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
             device_map="auto" if torch.cuda.is_available() else None,
         )
         
@@ -62,27 +62,44 @@ def generate_response(message):
     text = tokenizer.decode(outputs[0], skip_special_tokens=True)
     
     # OPTIMIZED: Calculate confidence from generation logits (no extra forward pass)
-    # Use a conservative heuristic based on response quality
+    # Use a more nuanced heuristic based on response quality and relevance
     # This avoids the expensive second forward pass
     response_length = len(text.strip())
+    response_lower = text.lower().strip()
     
-    # More conservative confidence scoring
-    # Medical responses should be cautious - default to lower confidence
+    # Base confidence from length (more granular)
     if response_length < 10:
         confidence = 0.2  # Very short = very low confidence
     elif response_length < 30:
-        confidence = 0.3 + (response_length / 30) * 0.2  # 0.3-0.5
+        confidence = 0.3 + (response_length / 30) * 0.15  # 0.3-0.45
     elif response_length < 100:
-        confidence = 0.5 + ((response_length - 30) / 70) * 0.2  # 0.5-0.7
+        confidence = 0.45 + ((response_length - 30) / 70) * 0.2  # 0.45-0.65
+    elif response_length < 200:
+        confidence = 0.65 + ((response_length - 100) / 100) * 0.1  # 0.65-0.75
     else:
-        confidence = min(0.7 + ((response_length - 100) / 200) * 0.15, 0.85)  # 0.7-0.85 max
+        confidence = 0.75  # Very long responses cap at 0.75
     
-    # Additional check: if response seems incomplete or repetitive, lower confidence
-    if text.count(text[:20]) > 2:  # Repetitive content
-        confidence *= 0.7
+    # Quality adjustments based on content
+    # Check for medical relevance indicators
+    medical_keywords = ['symptom', 'health', 'medical', 'doctor', 'patient', 'treatment', 
+                       'disease', 'condition', 'pain', 'fever', 'headache', 'cough']
+    has_medical_context = any(keyword in response_lower for keyword in medical_keywords)
     
-    # Medical responses should be conservative - cap at reasonable level
-    confidence = min(confidence, 0.75)  # Max 75% for untrained model
+    if has_medical_context:
+        confidence += 0.05  # Slight boost for medical relevance
+    else:
+        confidence -= 0.1  # Lower if not medical-related
+    
+    # Penalize repetitive or incomplete responses
+    if response_length > 20 and text.count(text[:20]) > 2:  # Repetitive content
+        confidence *= 0.6
+    
+    # Penalize if response seems like code or unrelated content
+    if any(indicator in response_lower[:50] for indicator in ['def ', 'import ', 'function', 'class ', '```']):
+        confidence *= 0.5  # Code snippets = low confidence for medical
+    
+    # Normalize to reasonable range for untrained model
+    confidence = max(0.2, min(confidence, 0.75))  # Clamp between 0.2 and 0.75
     
     return text, round(confidence, 2)
 
