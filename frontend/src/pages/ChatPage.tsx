@@ -21,7 +21,13 @@ const ChatPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const assistantMessage = await sendMessage(text);
+      // Format conversation history for API (last 10 messages to avoid token limits)
+      const recentHistory = messages.slice(-10).map(msg => ({
+        role: msg.role,
+        content: msg.text,
+      }));
+
+      const assistantMessage = await sendMessage(text, recentHistory);
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -35,7 +41,7 @@ const ChatPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [messages]);
 
   const handleClearChat = useCallback(() => {
     if (window.confirm('Are you sure you want to clear the chat?')) {

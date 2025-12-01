@@ -1,7 +1,6 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
-model_name = "microsoft/phi-2"
+from app.config import settings
 
 # Initialize model and tokenizer (lazy loading)
 tokenizer = None
@@ -9,16 +8,45 @@ model = None
 
 
 def load_model():
-    """Load model and tokenizer once at startup."""
+    """Load model and tokenizer once at startup. Supports LoRA adapters."""
     global tokenizer, model
     if tokenizer is None or model is None:
         print("Loading model...")
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(
+        model_name = settings.MODEL_NAME
+        lora_path = settings.LORA_MODEL_PATH
+        
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        
+        # Load base model
+        base_model = AutoModelForCausalLM.from_pretrained(
             model_name,
             dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
             device_map="auto" if torch.cuda.is_available() else None,
+            trust_remote_code=True,
         )
+        
+        # Load LoRA adapter if specified
+        if lora_path:
+            try:
+                from peft import PeftModel
+                print(f"Loading LoRA adapter from: {lora_path}")
+                model = PeftModel.from_pretrained(base_model, lora_path)
+                print("✅ LoRA adapter loaded successfully!")
+            except ImportError:
+                print("⚠️ PEFT not installed. Install with: pip install peft")
+                print("   Falling back to base model...")
+                model = base_model
+            except Exception as e:
+                print(f"⚠️ Error loading LoRA adapter: {e}")
+                print("   Falling back to base model...")
+                model = base_model
+        else:
+            model = base_model
+        
+        # Set pad token if not present
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+            tokenizer.pad_token_id = tokenizer.eos_token_id
         
         # Optimize for inference
         model.eval()
@@ -36,14 +64,62 @@ def load_model():
     return tokenizer, model
 
 
-def generate_response(message):
-    """Generate response with optimized confidence calculation."""
+def format_conversation(message: str, history: list = None) -> str:
+    """
+    Format conversation history and current message for phi-2 model.
+    Phi-2 uses a simple chat format.
+    
+    Args:
+        message: Current user message
+        history: List of previous messages (can be dicts or Pydantic models)
+    """
+    if not history:
+        # No history, just return the current message
+        return f"Human: {message}\nAssistant:"
+    
+    # Build conversation context
+    conversation = ""
+    for msg in history:
+        # Handle both dict and Pydantic model formats
+        if isinstance(msg, dict):
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+        else:
+            # Pydantic model
+            role = getattr(msg, "role", "")
+            content = getattr(msg, "content", "")
+        
+        if role == "user":
+            conversation += f"Human: {content}\n"
+        elif role == "assistant":
+            conversation += f"Assistant: {content}\n"
+    
+    # Add current message
+    conversation += f"Human: {message}\nAssistant:"
+    
+    return conversation
+
+
+def generate_response(message: str, history: list = None):
+    """
+    Generate response with conversation history support.
+    
+    Args:
+        message: Current user message
+        history: List of previous messages in format [{"role": "user|assistant", "content": "..."}, ...]
+    
+    Returns:
+        tuple: (response_text, confidence_score)
+    """
     # Load model if not already loaded
     if tokenizer is None or model is None:
         load_model()
     
+    # Format conversation with history
+    formatted_prompt = format_conversation(message, history)
+    
     # Tokenize input
-    inputs = tokenizer(message, return_tensors="pt")
+    inputs = tokenizer(formatted_prompt, return_tensors="pt")
     
     # Move inputs to same device as model
     if torch.cuda.is_available():
@@ -58,8 +134,15 @@ def generate_response(message):
             pad_token_id=tokenizer.eos_token_id,
         )
     
-    # Decode response
-    text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # Decode response - extract only the new assistant response
+    full_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    
+    # Extract only the assistant's response (everything after the last "Assistant:")
+    if "Assistant:" in full_text:
+        text = full_text.split("Assistant:")[-1].strip()
+    else:
+        # Fallback: if format is different, use the full text
+        text = full_text.strip()
     
     # OPTIMIZED: Calculate confidence from generation logits (no extra forward pass)
     # Use a more nuanced heuristic based on response quality and relevance

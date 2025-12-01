@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 # Load environment variables from .env file
 load_dotenv()
@@ -9,8 +10,9 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # Model configuration
-    MODEL_NAME: str = "google/flan-t5-small"
-    MAX_NEW_TOKENS: int = 60
+    MODEL_NAME: str = "microsoft/phi-2"  # Base model name
+    LORA_MODEL_PATH: Optional[str] = None  # Path to trained LoRA adapter (optional, set in .env)
+    MAX_NEW_TOKENS: int = 150
     
     # Confidence threshold
     CONFIDENCE_THRESHOLD: float = 0.6

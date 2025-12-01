@@ -1,5 +1,25 @@
 # MediMind - AI Health Guidance Chatbot for UCA
 
+**University of Central Asia (UCA) - Medical Guidance System**
+
+MediMind is an AI-powered health guidance chatbot designed specifically for UCA students and staff. When the system has low confidence in its response, it directs users to UCA's medical services.
+
+## 📚 Documentation
+
+Complete documentation is available in the `docs/` directory:
+
+- **[Quick Start Guide](docs/QUICK_START.md)** - Get started in 5 minutes
+- **[Training Guide](docs/TRAINING.md)** - Complete guide for fine-tuning the model
+- **[API Documentation](docs/API.md)** - Backend API endpoints and usage
+- **[Architecture](docs/ARCHITECTURE.md)** - System architecture and design
+
+### Quick Links
+
+- 🚀 [Quick Start](docs/QUICK_START.md) - Installation and setup
+- 🎓 [Training](docs/TRAINING.md) - Model fine-tuning guide
+- 📡 [API Reference](docs/API.md) - API endpoints and examples
+- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design and components
+
 An AI-powered health guidance chatbot built with FastAPI and React.
 
 ## Project Structure

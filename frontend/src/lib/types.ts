@@ -13,7 +13,13 @@ export interface ChatResponse {
   safe?: boolean; // Optional - backend may not always include this
 }
 
+export interface MessageHistory {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface ChatRequest {
   message: string; // Backend expects 'message' field
+  history?: MessageHistory[]; // Optional conversation history
 }
 

@@ -8,3 +8,7 @@ python-multipart
 python-dotenv
 requests
 datasets
+# Training dependencies
+peft
+bitsandbytes
+accelerate

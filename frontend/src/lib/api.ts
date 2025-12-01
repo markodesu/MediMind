@@ -8,8 +8,20 @@ if (import.meta.env.DEV) {
   console.log('📡 VITE_API_URL env:', import.meta.env.VITE_API_URL || '(not set, using default)');
 }
 
-export async function sendMessage(question: string): Promise<Message> {
-  const requestBody = { message: question }; // Backend expects 'message' field
+export async function sendMessage(
+  question: string,
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>
+): Promise<Message> {
+  // Format history for backend
+  const formattedHistory = history?.map(msg => ({
+    role: msg.role,
+    content: msg.content,
+  }));
+
+  const requestBody = {
+    message: question,
+    history: formattedHistory || [],
+  };
   const url = `${API_URL}/api/v1/chat`; // Backend uses /api/v1 prefix
 
   if (import.meta.env.DEV) {

@@ -31,4 +31,8 @@ async def startup_event():
 # Add a root endpoint
 @app.get("/")
 async def root():
-    return {"message": "MediMind backend is running!"}
+    return {
+        "message": "MediMind API - University of Central Asia",
+        "description": "AI Health Guidance Chatbot for UCA students and staff",
+        "version": "1.0.0"
+    }
