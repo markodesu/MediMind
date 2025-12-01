@@ -121,12 +121,12 @@ The frontend is configured to connect to the backend API running on `http://loca
 
 ### API Endpoint
 
-The frontend expects a POST endpoint at `/chat`:
+The frontend expects a POST endpoint at `/api/v1/chat`:
 
 **Request:**
 ```json
 {
-  "question": "I have a headache"
+  "message": "I have a headache"
 }
 ```
 
