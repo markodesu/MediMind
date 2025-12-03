@@ -48,7 +48,7 @@ def check_prerequisites():
             print(f"✅ GPU available: {gpu_name} ({vram_gb:.1f} GB VRAM)")
         else:
             print("⚠️  No GPU detected - training will be VERY slow on CPU")
-            print("   Recommended: Use Google Colab (free GPU)")
+            print("   Recommended: Use local GPU with 8GB+ VRAM")
             response = input("Continue anyway? (y/N): ")
             if response.lower() != 'y':
                 sys.exit(0)

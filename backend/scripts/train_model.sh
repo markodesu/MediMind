@@ -60,7 +60,7 @@ if torch.cuda.is_available():
     print(f"   VRAM: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
 else:
     print("⚠️  No GPU detected - training will be VERY slow on CPU")
-    print("   Recommended: Use Google Colab for free GPU access")
+    print("   Recommended: Use local GPU with 8GB+ VRAM")
     response = input("Continue anyway? (y/N): ")
     if response.lower() != 'y':
         exit(1)

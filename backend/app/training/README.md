@@ -29,9 +29,9 @@ python -m app.training.train \
     --learning_rate 2e-4
 ```
 
-### Option 2: Google Colab
+### Option 2: Local GPU Training
 
-1. Upload the training script and dataset to Colab
+1. Ensure you have a GPU with 8GB+ VRAM
 2. Install dependencies:
    ```python
    !pip install transformers peft bitsandbytes accelerate datasets

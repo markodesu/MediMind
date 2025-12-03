@@ -110,7 +110,7 @@ Best for: Users with local GPU (8GB+ VRAM)
 - CUDA installed
 - Sufficient disk space for model checkpoints
 
-**Note:** Colab is not recommended due to instability and frequent crashes during training.
+**Note:** Local GPU training is recommended for reliability and performance.
 
 ### Option 3: HuggingFace AutoTrain
 
@@ -451,7 +451,7 @@ RuntimeError: CUDA out of memory
 1. **Use GPU:** Training on CPU is extremely slow
 2. **Reduce dataset size:** Use subset for testing
 3. **Reduce max_length:** `--max_length 256`
-4. **Use Colab:** Free GPU access
+4. **Use Local GPU:** 8GB+ VRAM recommended
 
 ### Issue: Model Not Loading
 
