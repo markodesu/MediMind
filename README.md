@@ -19,7 +19,6 @@ MediMind implements **3 intelligent behaviors**:
 All documentation is in the `docs/` directory:
 
 - **[Quick Start Guide](docs/QUICK_START.md)** – Get up and running in minutes  
-- **[Google Colab Training](docs/COLAB_QUICK_START.md)** – Train on free GPU (recommended) 🆕  
 - **[Training Guide](docs/TRAINING.md)** – Full fine-tuning guide  
 - **[API Documentation](docs/API.md)** – Backend API endpoints and usage  
 - **[Architecture](docs/ARCHITECTURE.md)** – System architecture and design

@@ -518,15 +518,15 @@ Confidence: 0.4 - 0.2 - 0.15 = 0.05 → ❌ Routes to doctor
   - Reduces memory by 70-90%
   - Trains faster
   - Works with 4-bit quantization (6-8GB VRAM)
-- **Google Colab support:**
-  - Free GPU access
+- **Local training:**
+  - Train on local GPU (8GB+ VRAM recommended)
   - Pre-configured training scripts
-  - Documentation for Colab setup
+  - Full control over training process
 
 **Result:**
 - Fine-tuning accessible on consumer hardware
 - Faster training times
-- Optional fine-tuning (base model works well)
+- Optional fine-tuning (base model works well without fine-tuning)
 
 ---
 

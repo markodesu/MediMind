@@ -76,7 +76,7 @@ pip install -r backend/requirements.txt
 | **Full Precision** | 16+ GB | ~1-2 hours |
 | **CPU** (not recommended) | N/A | 24+ hours |
 
-**Recommendation:** Use a GPU with at least 8GB VRAM or use Google Colab (free GPU).
+**Recommendation:** Use a GPU with at least 8GB VRAM for local training.
 
 ---
 
@@ -95,18 +95,22 @@ Best for: Users with local GPU access
 - Requires GPU hardware
 - Higher electricity costs
 
-### Option 2: Google Colab (Free GPU)
+### Option 2: Local GPU Training (Alternative Setup)
 
-Best for: Users without local GPU
+Best for: Users with local GPU (8GB+ VRAM)
 
 **Advantages:**
-- Free GPU access (T4/V100)
-- No setup required
-- Easy to share and collaborate
+- Full control over training process
+- No session time limits
+- More reliable than cloud solutions
+- Faster training with direct GPU access
 
-**Disadvantages:**
-- Session time limits (~12 hours)
-- May disconnect during long training
+**Requirements:**
+- GPU with 8GB+ VRAM (NVIDIA recommended)
+- CUDA installed
+- Sufficient disk space for model checkpoints
+
+**Note:** Colab is not recommended due to instability and frequent crashes during training.
 
 ### Option 3: HuggingFace AutoTrain
 
@@ -181,12 +185,12 @@ Model saved to: ./models/medimind-phi2-lora
 
 ---
 
-### Option 2: Google Colab Training
+### Option 2: Local GPU Training (Alternative Method)
 
-#### Step 1: Create New Colab Notebook
+#### Step 1: Prepare Training Environment
 
-1. Go to https://colab.research.google.com
-2. Create a new notebook
+1. Ensure you have a GPU with 8GB+ VRAM
+2. Install CUDA and PyTorch with GPU support
 3. Enable GPU: **Runtime → Change runtime type → GPU (T4 or V100)**
 
 #### Step 2: Install Dependencies
