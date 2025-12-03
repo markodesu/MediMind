@@ -29,3 +29,7 @@ backend/app/data/cache/
 # Raw dataset files (downloaded, not needed in repo)
 backend/app/data/raw_datasets/
 backend/app/data/*.zip
+
+# Logs
+backend/logs/
+*.log
