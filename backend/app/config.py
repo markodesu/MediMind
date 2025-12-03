@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Model configuration
     MODEL_NAME: str = "microsoft/phi-2"  # Base model name
     LORA_MODEL_PATH: Optional[str] = None  # Path to trained LoRA adapter (optional, set in .env)
-    MAX_NEW_TOKENS: int = 150
+    MAX_NEW_TOKENS: int = 180  # Base for simple questions, doubled for complex questions
     
     # Confidence threshold
     CONFIDENCE_THRESHOLD: float = 0.6
