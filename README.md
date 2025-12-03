@@ -20,6 +20,7 @@ Complete documentation is available in the `docs/` directory:
 
 - **[Intelligent Features](docs/INTELLIGENT_FEATURES.md)** - Detailed AI behavior documentation ⭐
 - **[Quick Start Guide](docs/QUICK_START.md)** - Get started in 5 minutes
+- **[Google Colab Training](docs/COLAB_QUICK_START.md)** - Train on free GPU (Recommended) 🆕
 - **[Training Guide](docs/TRAINING.md)** - Complete guide for fine-tuning the model
 - **[API Documentation](docs/API.md)** - Backend API endpoints and usage
 - **[Architecture](docs/ARCHITECTURE.md)** - System architecture and design
@@ -28,7 +29,8 @@ Complete documentation is available in the `docs/` directory:
 
 - 🤖 [Intelligent Features](docs/INTELLIGENT_FEATURES.md) - AI behaviors and code evidence
 - 🚀 [Quick Start](docs/QUICK_START.md) - Installation and setup
-- 🎓 [Training](docs/TRAINING.md) - Model fine-tuning guide
+- ☁️ [Google Colab Training](docs/COLAB_QUICK_START.md) - Free GPU training (2-4 hours) ⭐
+- 📚 [Training Guide](docs/TRAINING.md) - Complete fine-tuning documentation
 - 📡 [API Reference](docs/API.md) - API endpoints and examples
 - 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design and components
 
