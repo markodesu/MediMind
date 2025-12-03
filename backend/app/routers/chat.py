@@ -5,14 +5,16 @@ from app.config import settings
 
 router = APIRouter()
 
-# UCA-specific medical contact information
-UCA_MEDICAL_CONTACT = """Please visit Dr. Kyal at the University of Central Asia (UCA).
+# UCA-specific medical contact information (dynamically generated from settings)
+def get_uca_medical_contact() -> str:
+    """Generate UCA medical contact information from settings."""
+    return f"""Please visit {settings.UCA_MEDICAL_CONTACT_NAME} at the University of Central Asia (UCA).
 
 Contact Information:
-📞 Phone: +996708136013
-📍 Location: 1st floor, Academic Block, near GYM
+📞 Phone: {settings.UCA_MEDICAL_PHONE}
+📍 Location: {settings.UCA_MEDICAL_LOCATION}
 
-Dr. Kyal is available to provide professional medical consultation for UCA students and staff."""
+{settings.UCA_MEDICAL_CONTACT_NAME} is available to provide professional medical consultation for UCA students and staff."""
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -30,7 +32,7 @@ async def chat(request: ChatRequest):
     # Check if question requires doctor referral (urgent/complex cases)
     if should_redirect_to_doctor(user_message):
         return ChatResponse(
-            answer=f"For medical diagnosis, prescriptions, or complex symptoms, {UCA_MEDICAL_CONTACT}",
+            answer=f"For medical diagnosis, prescriptions, or complex symptoms, {get_uca_medical_contact()}",
             confidence=0.3,
             safe=False
         )
@@ -41,7 +43,7 @@ async def chat(request: ChatRequest):
     # Safety check - low confidence redirects to UCA medical services
     if confidence < settings.CONFIDENCE_THRESHOLD:
         return ChatResponse(
-            answer=f"I'm not fully confident in my assessment. {UCA_MEDICAL_CONTACT}",
+            answer=f"I'm not fully confident in my assessment. {get_uca_medical_contact()}",
             confidence=confidence,
             safe=False
         )

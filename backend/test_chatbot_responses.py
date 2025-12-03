@@ -196,7 +196,7 @@ class ChatbotTester:
         self.test_case(
             "Ask for Dr. Kyal contact",
             "What is Dr. Kyal's contact?",
-            expected_contains=["dr. kyal", "996708136013", "phone"],
+            expected_contains=["dr. kyal", "phone"],  # Phone number from settings, not hardcoded
             min_confidence=0.5
         )
         

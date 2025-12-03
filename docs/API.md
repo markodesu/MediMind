@@ -77,7 +77,7 @@ Send a message to the MediMind chatbot and receive a response.
 **Low Confidence Response:**
 ```json
 {
-  "answer": "I am not fully confident in this assessment. Please visit Dr. Kyal at the University of Central Asia (UCA).\n\nContact Information:\n📞 Phone: +996708136013\n📍 Location: 1st floor, Academic Block, near GYM\n\nDr. Kyal is available to provide professional medical consultation for UCA students and staff.",
+  "answer": "I am not fully confident in this assessment. Please visit Dr. Kyal at the University of Central Asia (UCA).\n\nContact Information:\n📞 Phone: +996XXXXXXXXX\n📍 Location: 1st floor, Academic Block, near GYM\n\nDr. Kyal is available to provide professional medical consultation for UCA students and staff.",
   "confidence": 0.35,
   "safe": false
 }
@@ -257,7 +257,7 @@ CONFIDENCE_THRESHOLD=0.5
 
 # UCA Medical Contact
 UCA_MEDICAL_CONTACT_NAME=Dr. Kyal
-UCA_MEDICAL_PHONE=+996708136013
+UCA_MEDICAL_PHONE=+996XXXXXXXXX  # Set your actual phone number here
 UCA_MEDICAL_LOCATION=1st floor, Academic Block, near GYM
 ```
 

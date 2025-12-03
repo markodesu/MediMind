@@ -141,7 +141,7 @@ Storage for AI model weights and configuration files. Use Git LFS for large mode
 
    # UCA medical contact details used when routing to human care
    UCA_MEDICAL_CONTACT_NAME=Dr. Kyal
-   UCA_MEDICAL_PHONE=+996708136013
+   UCA_MEDICAL_PHONE=+996XXXXXXXXX  # Set your actual phone number here
    UCA_MEDICAL_LOCATION=1st floor, Academic Block, near GYM
 
    # API metadata (optional)

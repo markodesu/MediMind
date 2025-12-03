@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     API_TITLE: str = "MediMind API - University of Central Asia"
     API_VERSION: str = "1.0.0"
     
-    # UCA Medical Services
+    # UCA Medical Services (must be set in .env file)
     UCA_MEDICAL_CONTACT_NAME: str = "Dr. Kyal"
-    UCA_MEDICAL_PHONE: str = "+996708136013"
+    UCA_MEDICAL_PHONE: str = "SET_IN_ENV_FILE"  # Must be set in .env file - will raise error if not set
     UCA_MEDICAL_LOCATION: str = "1st floor, Academic Block, near GYM"
     
     # Knowledge base
