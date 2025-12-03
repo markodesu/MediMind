@@ -187,51 +187,48 @@ Model saved to: ./models/medimind-phi2-lora
 
 ### Option 2: Local GPU Training (Alternative Method)
 
-#### Step 1: Prepare Training Environment
+#### Step 1: Verify GPU Access
 
-1. Ensure you have a GPU with 8GB+ VRAM
-2. Install CUDA and PyTorch with GPU support
-3. Enable GPU: **Runtime → Change runtime type → GPU (T4 or V100)**
+```bash
+nvidia-smi  # Should show your GPU
+python -c "import torch; print(torch.cuda.is_available())"  # Should print True
+```
 
 #### Step 2: Install Dependencies
 
-```python
-!pip install transformers peft bitsandbytes accelerate datasets torch
+```bash
+pip install transformers peft bitsandbytes accelerate datasets torch
 ```
 
-#### Step 3: Upload Files
+#### Step 3: Prepare Training Environment
 
-Upload to Colab:
+Ensure you have:
 - `backend/app/training/train.py`
 - `backend/app/data/dataset.jsonl`
-
-Or clone the repository:
-
-```python
-!git clone https://github.com/yourusername/MediMind.git
-!cd MediMind
-```
+- Sufficient disk space (at least 10GB for checkpoints)
 
 #### Step 4: Run Training
 
-```python
-!cd MediMind/backend && python -m app.training.train \
+```bash
+cd backend
+python -m app.training.train \
     --dataset_path app/data/dataset.jsonl \
     --output_dir ./models/medimind-phi2-lora \
-    --num_epochs 3
+    --num_epochs 3 \
+    --batch_size 4 \
+    --learning_rate 2e-4
 ```
 
-#### Step 5: Download Model
+#### Step 5: Verify Trained Model
 
-After training completes:
+After training completes, the model will be saved to:
+```
+./models/medimind-phi2-lora/
+```
 
-```python
-from google.colab import files
-import shutil
-
-# Create zip file
-shutil.make_archive('medimind-phi2-lora', 'zip', './models/medimind-phi2-lora')
-files.download('medimind-phi2-lora.zip')
+You can test it by updating your `.env` file:
+```env
+LORA_MODEL_PATH=./models/medimind-phi2-lora
 ```
 
 ---
