@@ -7,6 +7,128 @@ from app.config import settings
 tokenizer = None
 model = None
 
+# Campus doctor routing sentence (used everywhere for safety)
+UCA_DOCTOR_LINE = (
+    f"If your symptoms continue, get worse, or worry you, please visit "
+    f"{settings.UCA_MEDICAL_CONTACT_NAME} at the UCA medical office on campus."
+)
+
+# Short conversational hint to collect basic intake details
+INTAKE_HINT = (
+    "If you are comfortable, please also tell me when this started, how strong the "
+    "symptoms feel (mild, moderate, or strong), where exactly you feel it, and any "
+    "other symptoms like fever, cough, dizziness, nausea, or rash."
+)
+
+
+# -------- Static responses for very common, simple issues (no LLM call) --------
+
+def get_static_response(message: str) -> str | None:
+    """
+    For very common, simple questions, return a predefined response
+    to reduce latency and keep answers consistent and safe.
+
+    IMPORTANT:
+    - Uses Kyrgyzstan-appropriate common medicines (paracetamol, Taylol Hot)
+    - Never provides dosages
+    - Always ends with campus doctor routing line
+    """
+    msg = message.lower().strip()
+
+    # Direct request for campus doctor / Dr. Kyal contact details
+    if any(
+        phrase in msg
+        for phrase in [
+            "dr kyal",
+            "doctor kyal",
+            "campus doctor contact",
+            "medical office contact",
+            "uca doctor contact",
+            "campus clinic contact",
+            "medical office phone",
+            "doctor phone number",
+        ]
+    ):
+        return (
+            f"The UCA campus doctor is {settings.UCA_MEDICAL_CONTACT_NAME}. "
+            f"You can contact them at {settings.UCA_MEDICAL_PHONE}, "
+            f"and the medical office is located at {settings.UCA_MEDICAL_LOCATION}. "
+            "If you feel very unwell, seek help in person as soon as you can."
+        )
+
+    # Headache / mild pain
+    if any(k in msg for k in ["headache", "head pain", "migraine"]):
+        return (
+            "For a mild headache, rest in a quiet, dark room and drink enough water. "
+            "Many people in Kyrgyzstan also use simple pain relievers like paracetamol, "
+            "but a doctor or pharmacist should advise what is best for you. "
+            f"{UCA_DOCTOR_LINE} "
+            f"{INTAKE_HINT}"
+        )
+
+    # Common cold – be stricter so we don't trigger on unrelated 'cold' uses
+    cold_symptoms = ["runny nose", "sore throat", "sneezing", "cough"]
+    has_cold_symptom = any(k in msg for k in cold_symptoms)
+    if has_cold_symptom or ("cold" in msg and has_cold_symptom):
+        return (
+            "For a common cold, rest, drink warm fluids, and use home remedies like honey with warm tea. "
+            "Many people also use simple medicines such as paracetamol or locally available hot drink powders for colds, "
+            "but a doctor or pharmacist should guide what is safe for you. "
+            f"{UCA_DOCTOR_LINE} "
+            f"{INTAKE_HINT}"
+        )
+
+    # Flu
+    if "flu" in msg or "gripp" in msg:
+        return (
+            "Flu usually causes fever, body aches, cough, and fatigue; rest at home, drink plenty of fluids, and stay warm. "
+            "In Kyrgyzstan, people often use simple medicines like paracetamol and some hot flu powders to relieve fever and aches, "
+            "but it is safest to follow a doctor or pharmacist’s advice. "
+            f"{UCA_DOCTOR_LINE} "
+            f"{INTAKE_HINT}"
+        )
+
+    # Mild stomach issues / food poisoning
+    if any(k in msg for k in ["stomach ache", "stomach pain", "food poisoning", "diarrhea", "vomit", "vomiting"]):
+        return (
+            "For mild stomach upset or possible food poisoning, rest and sip water or oral rehydration slowly to avoid "
+            "dehydration, and avoid heavy or spicy food for a while. "
+            f"{UCA_DOCTOR_LINE} "
+            f"{INTAKE_HINT}"
+        )
+
+    # Period pain / menstrual cramps
+    if any(k in msg for k in ["period pain", "menstrual pain", "cramps", "dysmenorrhea", "period cramps"]):
+        return (
+            "Period cramps are very common, but the pain should usually be manageable. Gentle heat on the lower abdomen, "
+            "light stretching, rest, and relaxation can help ease cramps. Some people also use simple pain relievers like "
+            "paracetamol, but a doctor or pharmacist should confirm what is safe for you. If the pain is much stronger than "
+            "your usual periods, comes with very heavy bleeding, large clots, dizziness, or you might be pregnant, please see "
+            "a gynecologist or the campus doctor as soon as you can. "
+            f"{UCA_DOCTOR_LINE} "
+            f"{INTAKE_HINT}"
+        )
+
+    # Stress / anxiety
+    if any(k in msg for k in ["stress", "stressed", "anxiety", "panic", "worried", "depressed"]):
+        return (
+            "When feeling stressed or anxious, try slowing your breathing, taking short walks, and talking with a "
+            "trusted friend, family member, or counselor. "
+            f"{UCA_DOCTOR_LINE} "
+            f"{INTAKE_HINT}"
+        )
+
+    # Insomnia / trouble sleeping
+    if any(k in msg for k in ["cannot sleep", "can't sleep", "insomnia", "trouble sleeping", "sleep problem"]):
+        return (
+            "For trouble sleeping, keep a regular sleep schedule, limit screens before bed, avoid caffeine late in the "
+            "day, and create a calm, dark environment for sleep. "
+            f"{UCA_DOCTOR_LINE} "
+            f"{INTAKE_HINT}"
+        )
+
+    return None
+
 
 def load_model():
     """Load model and tokenizer once at startup. Supports LoRA adapters."""
@@ -74,10 +196,32 @@ def should_redirect_to_doctor(message: str) -> bool:
     
     # Keywords that indicate need for professional help
     urgent_keywords = [
-        'severe', 'emergency', 'chest pain', 'can\'t breathe', 'difficulty breathing',
-        'unconscious', 'bleeding heavily', 'severe allergic reaction', 'overdose',
-        'diagnose', 'diagnosis', 'what disease', 'what condition', 'test results',
-        'prescription', 'medication', 'what medicine', 'what drug'
+        "severe",
+        "emergency",
+        "chest pain",
+        "can't breathe",
+        "cannot breathe",
+        "difficulty breathing",
+        "unconscious",
+        "bleeding heavily",
+        "nose is bleeding",
+        "nose bleed",
+        "bleeding nose",
+        "bleeding from nose",
+        "blood from nose",
+        "vomiting blood",
+        "coughing blood",
+        "severe allergic reaction",
+        "overdose",
+        "diagnose",
+        "diagnosis",
+        "what disease",
+        "what condition",
+        "test results",
+        "prescription",
+        "medication",
+        "what medicine",
+        "what drug",
     ]
     
     # Check for urgent patterns
@@ -147,23 +291,31 @@ def format_conversation(message: str, history: list = None) -> str:
     
     # System instructions - adapt based on complexity
     if is_complex:
-        system_instruction = """You are MediMind, a helpful health information assistant for university students.
+        system_instruction = """You are MediMind, a friendly and calm health information assistant for university students.
 Give clear, informative answers that fully address the question. You can use 3-5 sentences for complex questions.
 Focus on general health information and basic self-care. Use the conversation history to provide context-aware responses.
-For "what to do" questions, give actionable steps. Do not diagnose, prescribe, or give medical advice beyond general information.
+When a user describes current symptoms, first ask 1-2 short follow-up questions like a doctor (for example:
+when it started, how strong it feels, where exactly it is, whether it changed over time, other symptoms, medicines taken,
+allergies, or if they were around anyone sick). Be especially kind and non-judgmental for questions about periods,
+menstrual cramps, pregnancy, or gynecology, and remind users they can always talk to a doctor in person.
+Then give a short, helpful summary and what they can do next. Do not diagnose, prescribe, or give medical advice beyond general information.
 
 """
     else:
-        system_instruction = """You are MediMind, a helpful health information assistant for university students.
+        system_instruction = """You are MediMind, a friendly and calm health information assistant for university students.
 Give clear, concise answers in 1-2 complete sentences. Focus on general health information and basic self-care.
-For "what to do" questions, give brief actionable steps. Do not diagnose, prescribe, or give medical advice beyond general information.
+When a user describes current symptoms, you may respond with 1-2 brief follow-up questions like a doctor
+(for example: when it started, how strong it is (mild, moderate, strong), where exactly it is, or any other symptoms).
+Be especially kind and reassuring for questions about periods, menstrual cramps, pregnancy, or gynecology, and gently suggest
+seeing a doctor in person if something sounds unusual, severe, or worrying. For "what to do" questions, give brief actionable steps.
+Do not diagnose, prescribe, or give medical advice beyond general information.
 
 Examples:
-Human: What should I do if I have mild food poisoning?
-Assistant: Drink fluids, rest, and seek help if symptoms last more than 2 days.
+Human: I have had stomach pain since yesterday and feel a bit sick.
+Assistant: I’m sorry you’re feeling unwell. When did the pain start exactly, how strong is it (mild, moderate, or strong), and do you have any other symptoms like fever, vomiting, or diarrhea?
 
-Human: What is a headache?
-Assistant: A headache is pain in the head or neck area, often caused by tension, dehydration, or illness.
+Human: I have very strong period cramps today and feel dizzy.
+Assistant: Period cramps can be painful, but very strong pain and dizziness can be a sign you should see a doctor. When did the pain start, is the bleeding heavier than usual, and have you ever had pain this strong before?
 
 """
     
@@ -218,10 +370,25 @@ def post_process_response(text: str, user_message: str, is_complex: bool = False
         Cleaned response with appropriate length
     """
     if not text:
-        return "I'm not sure how to help with that. Please consult a healthcare professional."
-    
+        return (
+            "I'm not sure how to help with that in a safe way through chat. "
+            f"{UCA_DOCTOR_LINE}"
+        )
+
     text = text.strip()
-    
+
+    # Remove explicit dosage information (safety rule - no dosages)
+    text = re.sub(
+        r"\b\d+\s*(mg|ml|milligram|milliliter|tablet|pill|capsule)s?\b",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # Avoid strong prescription-style words
+    text = re.sub(r"\b(antibiotic|amoxicillin|ibuprofen|nsaid|steroid)s?\b", "medicine", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(prescribe|prescription|diagnose|diagnosis)\b", "assess", text, flags=re.IGNORECASE)
+
     # Find all complete sentences
     sentences = re.findall(r'[^.!?]*[.!?]', text)
     complete_sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
@@ -271,9 +438,21 @@ def post_process_response(text: str, user_message: str, is_complex: bool = False
     if result and result[-1] not in '.!?':
         result += '.'
     
-    # Add safety disclaimer if not already present (only for actionable advice)
-    if is_action_question and 'seek help' not in result.lower() and 'see a doctor' not in result.lower():
-        result += " Seek help if symptoms worsen or persist."
+    # Add campus doctor routing if not already present (only for actionable advice)
+    lower_result = result.lower()
+    if is_action_question and settings.UCA_MEDICAL_CONTACT_NAME.lower() not in lower_result:
+        # Remove generic “seek medical help” phrasing if present
+        result = re.sub(
+            r"seek (medical )?help( if [^.]+)?\.?",
+            "",
+            result,
+            flags=re.IGNORECASE,
+        ).strip()
+        if result and result[-1] not in ".!?":
+            result += "."
+        if result:
+            result += " "
+        result += UCA_DOCTOR_LINE
     
     # Limit length - but be more lenient for complex questions
     if len(result) > max_length:
@@ -309,6 +488,21 @@ def generate_response(message: str, history: list = None):
     Returns:
         tuple: (response_text, confidence_score)
     """
+    # Static responses for very common, simple queries (no LLM call)
+    static = get_static_response(message)
+    if static is not None:
+        # Use mid-high confidence for curated answers; no persistence, so no "locked" score
+        return static, 0.7
+
+    # Hard safety redirect for potentially serious issues (e.g., bleeding, chest pain)
+    if should_redirect_to_doctor(message):
+        return (
+            "This sounds like something that should be checked in person. "
+            "I cannot safely assess possible serious or bleeding symptoms over chat. "
+            f"{UCA_DOCTOR_LINE}",
+            0.3,
+        )
+
     # Load model if not already loaded
     if tokenizer is None or model is None:
         load_model()
