@@ -89,7 +89,7 @@ def get_static_response(message: str) -> str | None:
         )
 
     # Mild stomach issues / food poisoning
-    if any(k in msg for k in ["stomach ache", "stomach pain", "food poisoning", "diarrhea", "vomit", "vomiting"]):
+    if any(k in msg for k in ["stomach ache", "stomach pain", "stomachache", "stomach-ache", "food poisoning", "diarrhea", "vomit", "vomiting"]):
         return (
             "For mild stomach upset or possible food poisoning, rest and sip water or oral rehydration slowly to avoid "
             "dehydration, and avoid heavy or spicy food for a while. "
@@ -293,7 +293,12 @@ def format_conversation(message: str, history: list = None) -> str:
     if is_complex:
         system_instruction = """You are MediMind, a friendly and calm health information assistant for university students.
 Give clear, informative answers that fully address the question. You can use 3-5 sentences for complex questions.
-Focus on general health information and basic self-care. Use the conversation history to provide context-aware responses.
+Focus on general health information and basic self-care.
+
+IMPORTANT: Always respond to the CURRENT message the user just sent. If the user mentions a NEW symptom or topic, 
+respond to that NEW topic, not previous topics from the conversation history. Only use conversation history for 
+context when the user explicitly refers to previous messages (e.g., "that", "it", "the pain I mentioned", "what about...").
+
 When a user describes current symptoms, first ask 1-2 short follow-up questions like a doctor (for example:
 when it started, how strong it feels, where exactly it is, whether it changed over time, other symptoms, medicines taken,
 allergies, or if they were around anyone sick). Be especially kind and non-judgmental for questions about periods,
@@ -304,6 +309,11 @@ Then give a short, helpful summary and what they can do next. Do not diagnose, p
     else:
         system_instruction = """You are MediMind, a friendly and calm health information assistant for university students.
 Give clear, concise answers in 1-2 complete sentences. Focus on general health information and basic self-care.
+
+IMPORTANT: Always respond to the CURRENT message the user just sent. If the user mentions a NEW symptom or topic, 
+respond to that NEW topic, not previous topics from the conversation history. Only use conversation history for 
+context when the user explicitly refers to previous messages (e.g., "that", "it", "the pain I mentioned", "what about...").
+
 When a user describes current symptoms, you may respond with 1-2 brief follow-up questions like a doctor
 (for example: when it started, how strong it is (mild, moderate, strong), where exactly it is, or any other symptoms).
 Be especially kind and reassuring for questions about periods, menstrual cramps, pregnancy, or gynecology, and gently suggest
@@ -312,7 +322,7 @@ Do not diagnose, prescribe, or give medical advice beyond general information.
 
 Examples:
 Human: I have had stomach pain since yesterday and feel a bit sick.
-Assistant: I’m sorry you’re feeling unwell. When did the pain start exactly, how strong is it (mild, moderate, or strong), and do you have any other symptoms like fever, vomiting, or diarrhea?
+Assistant: I'm sorry you're feeling unwell. When did the pain start exactly, how strong is it (mild, moderate, or strong), and do you have any other symptoms like fever, vomiting, or diarrhea?
 
 Human: I have very strong period cramps today and feel dizzy.
 Assistant: Period cramps can be painful, but very strong pain and dizziness can be a sign you should see a doctor. When did the pain start, is the bleeding heavier than usual, and have you ever had pain this strong before?
@@ -328,7 +338,7 @@ Assistant: Period cramps can be painful, but very strong pain and dizziness can 
         
         # Add context instruction if there's history
         if len(recent_history) > 0:
-            conversation += "Previous conversation:\n"
+            conversation += "Previous conversation (for context only - respond to the CURRENT message below):\n"
         
         for msg in recent_history:
             # Handle both dict and Pydantic model formats
@@ -350,7 +360,7 @@ Assistant: Period cramps can be painful, but very strong pain and dizziness can 
         
         conversation += "\n"
     
-    # Add current message
+    # Add current message with emphasis
     conversation += f"Human: {message}\nAssistant:"
     
     return conversation
@@ -548,6 +558,7 @@ def generate_response(message: str, history: list = None):
     # Calculate confidence score
     response_length = len(text.strip())
     response_lower = text.lower().strip()
+    user_message_lower = message.lower()
     
     # Base confidence from length (optimized for concise responses)
     if response_length < 15:
@@ -559,16 +570,53 @@ def generate_response(message: str, history: list = None):
     else:
         confidence = 0.75  # Good length, cap at 0.75 for pre-trained model
     
-    # Quality adjustments based on content
+    # Analyze user message for medical relevance and danger indicators
     medical_keywords = ['symptom', 'health', 'medical', 'doctor', 'patient', 'treatment',
+                       'disease', 'condition', 'pain', 'fever', 'headache', 'cough', 'cold',
+                       'flu', 'stomach', 'ache', 'nausea', 'dizziness', 'rash', 'sore',
+                       'throat', 'runny', 'nose', 'sneezing', 'fatigue', 'tired', 'weak',
+                       'rest', 'drink', 'fluids', 'seek help', 'cramp', 'menstrual', 'period']
+    
+    # Dangerous/urgent keywords (even if not triggering immediate redirect)
+    dangerous_keywords = [
+        'severe', 'emergency', 'chest pain', 'breathing', 'unconscious', 'bleeding',
+        'blood', 'allergic', 'overdose', 'severe pain', 'extreme', 'intense',
+        'cannot', "can't", 'difficulty', 'worsening', 'getting worse', 'rapid',
+        'sudden', 'sharp', 'stabbing', 'crushing', 'pressure'
+    ]
+    
+    # Unknown/non-medical keywords
+    unknown_patterns = [
+        r'\b(xyz|abc|test|random|hello|hi|hey|what|how|why|when|where)\b',
+        r'\b\d{4,}\b',  # Long numbers (likely not medical)
+        r'[^\w\s]{3,}',  # Multiple special characters
+    ]
+    
+    # Check user message for medical relevance
+    has_medical_keywords = any(keyword in user_message_lower for keyword in medical_keywords)
+    has_dangerous_keywords = any(keyword in user_message_lower for keyword in dangerous_keywords)
+    has_unknown_patterns = any(re.search(pattern, user_message_lower) for pattern in unknown_patterns)
+    
+    # Adjust confidence based on user message analysis
+    if has_dangerous_keywords:
+        confidence *= 0.5  # Significantly lower for dangerous symptoms
+        confidence -= 0.15  # Additional penalty
+    elif not has_medical_keywords:
+        # No medical keywords found - lower confidence
+        confidence -= 0.2
+        if has_unknown_patterns:
+            confidence -= 0.15  # Extra penalty for unknown patterns
+    
+    # Quality adjustments based on response content
+    response_medical_keywords = ['symptom', 'health', 'medical', 'doctor', 'patient', 'treatment',
                        'disease', 'condition', 'pain', 'fever', 'headache', 'cough',
                        'rest', 'drink', 'fluids', 'seek help']
-    has_medical_context = any(keyword in response_lower for keyword in medical_keywords)
+    has_medical_context = any(keyword in response_lower for keyword in response_medical_keywords)
     
     if has_medical_context:
-        confidence += 0.05  # Boost for medical relevance
+        confidence += 0.05  # Boost for medical relevance in response
     else:
-        confidence -= 0.1  # Lower if not medical-related
+        confidence -= 0.1  # Lower if response not medical-related
     
     # Check for complete sentences
     has_punctuation = any(char in text for char in '.!?')

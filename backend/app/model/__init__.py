@@ -1,4 +1,5 @@
-from .inference import generate_response
+# Model functionality has been moved to app.services.llm
+# This module is kept for backward compatibility but is no longer used
 
-__all__ = ["generate_response"]
+__all__ = []
 
