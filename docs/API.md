@@ -253,7 +253,7 @@ LORA_MODEL_PATH=./models/medimind-phi2-lora  # Optional: path to trained LoRA ad
 MAX_NEW_TOKENS=150
 
 # Confidence Threshold
-CONFIDENCE_THRESHOLD=0.5
+CONFIDENCE_THRESHOLD=0.3
 
 # UCA Medical Contact
 UCA_MEDICAL_CONTACT_NAME=Dr. Kyal
@@ -263,9 +263,14 @@ UCA_MEDICAL_LOCATION=1st floor, Academic Block, near GYM
 
 ### Confidence Threshold
 
-When `confidence < CONFIDENCE_THRESHOLD`, the API returns a message directing users to UCA medical services instead of the AI response.
+The confidence threshold is set to `0.3` (30%) to allow the model to showcase its capabilities. However, safety is maintained through multiple layers:
 
-Default: `0.5` (50%)
+1. **Urgent cases** are redirected before model inference (via `should_redirect_to_doctor()`)
+2. **Low confidence responses** are marked as `safe: false` but still returned
+3. **Dangerous keywords** in user messages significantly lower confidence scores
+4. **Model instructions** explicitly avoid diagnoses and prescriptions
+
+The threshold primarily affects the `safe` flag in responses, not routing decisions (which are handled by urgent case detection).
 
 ---
 

@@ -229,15 +229,18 @@ def should_redirect_to_doctor(message: str) -> bool:
         if keyword in message_lower:
             return True
     
-    # Check for diagnostic questions
+    # Check for diagnostic questions (only specific diagnostic patterns, not informational "what is X")
     diagnostic_patterns = [
-        r'what (is|are|do i have|disease|condition)',
         r'do i have .+',
         r'am i .+',
+        r'what disease do i have',
+        r'what condition do i have',
         r'should i take .+',
-        r'what medicine',
-        r'what drug',
+        r'what medicine should i',
+        r'what drug should i',
         r'prescribe',
+        r'what is my diagnosis',
+        r'do i need .+ medicine',
     ]
     
     for pattern in diagnostic_patterns:
@@ -272,7 +275,14 @@ def is_complex_question(message: str, history: list = None) -> bool:
     if history and len(history) > 0:
         # If user is asking follow-up questions, it might need more context
         follow_up_words = ['that', 'this', 'it', 'they', 'what about', 'and', 'also']
-        if any(word in message_lower for word in follow_up_words):
+        # Temporal context words that refer to previous messages
+        temporal_words = ['now', 'today', 'yesterday', 'better', 'worse', 'improved', 'still', 'gone', 'went away', 
+                         'feeling', 'feels', 'was', 'were', 'is now', 'has been', 'got better', 'got worse']
+        # Pronouns and references that need context
+        reference_words = ['it', 'that', 'this', 'they', 'them', 'the pain', 'the symptom', 'the headache', 
+                          'the pain', 'my head', 'my stomach', 'my throat']
+        
+        if any(word in message_lower for word in follow_up_words + temporal_words + reference_words):
             return True
     
     return False
@@ -295,9 +305,15 @@ def format_conversation(message: str, history: list = None) -> str:
 Give clear, informative answers that fully address the question. You can use 3-5 sentences for complex questions.
 Focus on general health information and basic self-care.
 
-IMPORTANT: Always respond to the CURRENT message the user just sent. If the user mentions a NEW symptom or topic, 
-respond to that NEW topic, not previous topics from the conversation history. Only use conversation history for 
-context when the user explicitly refers to previous messages (e.g., "that", "it", "the pain I mentioned", "what about...").
+IMPORTANT: Always respond to the CURRENT message the user just sent. 
+
+TEMPORAL CONTEXT: Pay close attention to temporal references and pronouns. When the user says words like "it", "that", "now", 
+"better", "worse", "yesterday", "today", "still", "gone", "feels", "was", "is now" - these refer to previous symptoms or 
+topics mentioned in the conversation history. Use the conversation history to understand what "it" or "that" refers to.
+
+If the user mentions a NEW symptom or topic (completely different from history), respond to that NEW topic. But if they use 
+temporal words or pronouns ("it is better now", "that's gone", "still hurts"), they are referring to a previous symptom - 
+use the history to understand the context.
 
 When a user describes current symptoms, first ask 1-2 short follow-up questions like a doctor (for example:
 when it started, how strong it feels, where exactly it is, whether it changed over time, other symptoms, medicines taken,
@@ -305,32 +321,40 @@ allergies, or if they were around anyone sick). Be especially kind and non-judgm
 menstrual cramps, pregnancy, or gynecology, and remind users they can always talk to a doctor in person.
 Then give a short, helpful summary and what they can do next. Do not diagnose, prescribe, or give medical advice beyond general information.
 
+If the user asks for contact information for Dr. Kyal or the campus doctor, provide the contact details.
+
 """
     else:
-        system_instruction = """You are MediMind, a friendly and calm health information assistant for university students.
-Give clear, concise answers in 1-2 complete sentences. Focus on general health information and basic self-care.
+        system_instruction = """You are MediMind, a friendly health information assistant for university students.
 
-IMPORTANT: Always respond to the CURRENT message the user just sent. If the user mentions a NEW symptom or topic, 
-respond to that NEW topic, not previous topics from the conversation history. Only use conversation history for 
-context when the user explicitly refers to previous messages (e.g., "that", "it", "the pain I mentioned", "what about...").
+IMPORTANT: Always respond directly to the user's CURRENT question. Read their message carefully.
 
-When a user describes current symptoms, you may respond with 1-2 brief follow-up questions like a doctor
-(for example: when it started, how strong it is (mild, moderate, strong), where exactly it is, or any other symptoms).
-Be especially kind and reassuring for questions about periods, menstrual cramps, pregnancy, or gynecology, and gently suggest
-seeing a doctor in person if something sounds unusual, severe, or worrying. For "what to do" questions, give brief actionable steps.
-Do not diagnose, prescribe, or give medical advice beyond general information.
+If the user asks "what is [something]" (like "what is flu"), explain what it is in 2-3 sentences.
+If the user asks "what to do" or "what should I do", give practical self-care steps.
+If the user describes a symptom (like "my head hurts"), acknowledge it and ask 1-2 follow-up questions.
 
 Examples:
-Human: I have had stomach pain since yesterday and feel a bit sick.
-Assistant: I'm sorry you're feeling unwell. When did the pain start exactly, how strong is it (mild, moderate, or strong), and do you have any other symptoms like fever, vomiting, or diarrhea?
+Human: what is flu
+Assistant: Flu (influenza) is a viral infection that affects your respiratory system. It typically causes fever, body aches, cough, fatigue, and sometimes chills. Most people recover with rest and fluids.
 
-Human: I have very strong period cramps today and feel dizzy.
-Assistant: Period cramps can be painful, but very strong pain and dizziness can be a sign you should see a doctor. When did the pain start, is the bleeding heavier than usual, and have you ever had pain this strong before?
+Human: i have flu what to do
+Assistant: If you have flu, rest at home, drink plenty of fluids like water and warm tea, and get enough sleep. You can use simple pain relievers like paracetamol for fever and body aches (check with a pharmacist first). If symptoms get worse, see a doctor.
+
+Human: my head hurts
+Assistant: I'm sorry to hear that. When did the headache start, and how strong is it (mild, moderate, or strong)? Also, do you have any other symptoms like fever or nausea?
+
+Do not diagnose or prescribe. Be kind and helpful.
 
 """
     
     # Build conversation context with history
-    conversation = system_instruction
+    # Format system instruction with actual contact information
+    contact_info = (
+        f"If the user asks for contact information for Dr. Kyal or the campus doctor, "
+        f"provide: {settings.UCA_MEDICAL_CONTACT_NAME}, phone: {settings.UCA_MEDICAL_PHONE}, "
+        f"location: {settings.UCA_MEDICAL_LOCATION}.\n\n"
+    )
+    conversation = system_instruction + contact_info
     
     if history and len(history) > 0:
         # Include recent history for context (last 6 messages = 3 exchanges)
@@ -338,7 +362,7 @@ Assistant: Period cramps can be painful, but very strong pain and dizziness can 
         
         # Add context instruction if there's history
         if len(recent_history) > 0:
-            conversation += "Previous conversation (for context only - respond to the CURRENT message below):\n"
+            conversation += "Previous conversation (use this to understand temporal references like 'it', 'that', 'now', 'better', 'yesterday' in the current message):\n"
         
         for msg in recent_history:
             # Handle both dict and Pydantic model formats
@@ -498,12 +522,7 @@ def generate_response(message: str, history: list = None):
     Returns:
         tuple: (response_text, confidence_score)
     """
-    # Static responses for very common, simple queries (no LLM call)
-    static = get_static_response(message)
-    if static is not None:
-        # Use mid-high confidence for curated answers; no persistence, so no "locked" score
-        return static, 0.7
-
+    # All queries now go through the LLM to showcase model intelligence
     # Hard safety redirect for potentially serious issues (e.g., bleeding, chest pain)
     if should_redirect_to_doctor(message):
         return (
@@ -540,6 +559,7 @@ def generate_response(message: str, history: list = None):
             max_new_tokens=token_limit,
             do_sample=False,  # Greedy decoding for consistency
             pad_token_id=tokenizer.eos_token_id,
+            repetition_penalty=1.2,  # Reduce repetition
         )
     
     # Decode response - extract only the new assistant response
@@ -547,10 +567,28 @@ def generate_response(message: str, history: list = None):
     
     # Extract only the assistant's response (everything after the last "Assistant:")
     if "Assistant:" in full_text:
-        raw_text = full_text.split("Assistant:")[-1].strip()
+        # Get everything after the last "Assistant:" marker
+        parts = full_text.split("Assistant:")
+        raw_text = parts[-1].strip()
+        
+        # Remove any remaining "Human:" references that might appear
+        if "Human:" in raw_text:
+            raw_text = raw_text.split("Human:")[0].strip()
+        
+        # Remove any leading/trailing whitespace and newlines
+        raw_text = raw_text.strip()
     else:
-        # Fallback: if format is different, use the full text
-        raw_text = full_text.strip()
+        # Fallback: if format is different, try to extract from prompt
+        # Remove the original prompt to get just the generated text
+        prompt_length = len(formatted_prompt)
+        if len(full_text) > prompt_length:
+            raw_text = full_text[prompt_length:].strip()
+        else:
+            raw_text = full_text.strip()
+        
+        # Still try to clean up
+        if "Human:" in raw_text:
+            raw_text = raw_text.split("Human:")[0].strip()
     
     # Post-process to ensure complete sentences (with complexity awareness)
     text = post_process_response(raw_text, message, is_complex)
@@ -561,14 +599,16 @@ def generate_response(message: str, history: list = None):
     user_message_lower = message.lower()
     
     # Base confidence from length (optimized for concise responses)
-    if response_length < 15:
-        confidence = 0.3  # Too short = low confidence
+    # Start with higher base confidence for model-generated responses
+    # Be more lenient - even short responses can be valid
+    if response_length < 20:
+        confidence = 0.5  # Short but could be valid (e.g., "I'm sorry to hear that.")
     elif response_length < 50:
-        confidence = 0.4 + ((response_length - 15) / 35) * 0.15  # 0.4-0.55
+        confidence = 0.55 + ((response_length - 20) / 30) * 0.15  # 0.55-0.7
     elif response_length < 150:
-        confidence = 0.55 + ((response_length - 50) / 100) * 0.2  # 0.55-0.75
+        confidence = 0.7 + ((response_length - 50) / 100) * 0.15  # 0.7-0.85
     else:
-        confidence = 0.75  # Good length, cap at 0.75 for pre-trained model
+        confidence = 0.85  # Good length, cap at 0.85 for pre-trained model
     
     # Analyze user message for medical relevance and danger indicators
     medical_keywords = ['symptom', 'health', 'medical', 'doctor', 'patient', 'treatment',
@@ -585,9 +625,9 @@ def generate_response(message: str, history: list = None):
         'sudden', 'sharp', 'stabbing', 'crushing', 'pressure'
     ]
     
-    # Unknown/non-medical keywords
+    # Unknown/non-medical keywords (exclude "what" since it's common in medical questions)
     unknown_patterns = [
-        r'\b(xyz|abc|test|random|hello|hi|hey|what|how|why|when|where)\b',
+        r'\b(xyz|abc|test|random)\b',
         r'\b\d{4,}\b',  # Long numbers (likely not medical)
         r'[^\w\s]{3,}',  # Multiple special characters
     ]
@@ -597,15 +637,22 @@ def generate_response(message: str, history: list = None):
     has_dangerous_keywords = any(keyword in user_message_lower for keyword in dangerous_keywords)
     has_unknown_patterns = any(re.search(pattern, user_message_lower) for pattern in unknown_patterns)
     
+    # Check for simple informational questions (should have higher confidence)
+    is_info_question = any(phrase in user_message_lower for phrase in ['what is', 'what are', 'what does', 'what can'])
+    is_what_to_do = 'what to do' in user_message_lower or 'what should i' in user_message_lower
+    
     # Adjust confidence based on user message analysis
     if has_dangerous_keywords:
         confidence *= 0.5  # Significantly lower for dangerous symptoms
         confidence -= 0.15  # Additional penalty
+    elif is_info_question or is_what_to_do:
+        # Informational or "what to do" questions should have good confidence
+        confidence += 0.1  # Boost for clear question types
     elif not has_medical_keywords:
-        # No medical keywords found - lower confidence
-        confidence -= 0.2
+        # No medical keywords found - lower confidence, but less harsh
+        confidence -= 0.05  # Reduced penalty
         if has_unknown_patterns:
-            confidence -= 0.15  # Extra penalty for unknown patterns
+            confidence -= 0.1  # Reduced penalty for unknown patterns
     
     # Quality adjustments based on response content
     response_medical_keywords = ['symptom', 'health', 'medical', 'doctor', 'patient', 'treatment',
@@ -614,9 +661,9 @@ def generate_response(message: str, history: list = None):
     has_medical_context = any(keyword in response_lower for keyword in response_medical_keywords)
     
     if has_medical_context:
-        confidence += 0.05  # Boost for medical relevance in response
+        confidence += 0.1  # Boost for medical relevance in response
     else:
-        confidence -= 0.1  # Lower if response not medical-related
+        confidence -= 0.05  # Lower penalty if response not medical-related
     
     # Check for complete sentences
     has_punctuation = any(char in text for char in '.!?')
@@ -634,7 +681,8 @@ def generate_response(message: str, history: list = None):
         confidence *= 0.4  # Code = very low confidence
     
     # Normalize to reasonable range for pre-trained model
-    confidence = max(0.2, min(confidence, 0.75))
+    # Allow higher confidence for good responses
+    confidence = max(0.3, min(confidence, 0.85))
     
     return text, round(confidence, 2)
 

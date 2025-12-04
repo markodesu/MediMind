@@ -119,14 +119,14 @@ async def chat(request: ChatRequest):
     response, confidence = generate_response(user_message, history)
     
     # INTELLIGENT DECISION-MAKING:
-    # If confidence is below threshold, route to human professional
-    # Otherwise, return AI-generated response
-    if confidence < settings.CONFIDENCE_THRESHOLD:
-        return ChatResponse(
-            answer=f"I am not fully confident in this assessment. {UCA_MEDICAL_CONTACT}",
-            confidence=confidence,
-            safe=False
-        )
+    # Urgent cases are handled by should_redirect_to_doctor() before model inference
+    # All model responses are returned to showcase capabilities
+    # Confidence threshold (0.3) determines the 'safe' flag, not routing
+    return ChatResponse(
+        answer=response,
+        confidence=confidence,
+        safe=confidence >= settings.CONFIDENCE_THRESHOLD
+    )
     
     # High confidence: return AI response
     return ChatResponse(
@@ -174,7 +174,7 @@ Decision threshold is configurable:
 
 ```python
 # backend/app/config.py
-CONFIDENCE_THRESHOLD: float = 0.5  # Decision threshold
+CONFIDENCE_THRESHOLD: float = 0.3  # Safety flag threshold (urgent cases handled separately)
 ```
 
 ---
@@ -307,7 +307,7 @@ Step 2: Prediction/Recommendation
   → Recommends: Medical advice with safety disclaimer
 
 Step 3: Decision-Making
-  → Confidence (0.68) >= Threshold (0.5)
+  → Confidence (0.68) >= Threshold (0.3) → safe: true
   → Decision: Return AI response
   → Output: Medical advice with confidence score
 ```

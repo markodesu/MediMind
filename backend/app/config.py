@@ -14,8 +14,10 @@ class Settings(BaseSettings):
     LORA_MODEL_PATH: Optional[str] = None  # Path to trained LoRA adapter (optional, set in .env)
     MAX_NEW_TOKENS: int = 180  # Base for simple questions, doubled for complex questions
     
-    # Confidence threshold
-    CONFIDENCE_THRESHOLD: float = 0.6
+    # Confidence threshold (lowered to allow more model responses)
+    # Model-generated responses should be trusted more
+    # Set to 0.3 to allow most model responses through
+    CONFIDENCE_THRESHOLD: float = 0.3
     
     # API configuration
     API_TITLE: str = "MediMind API - University of Central Asia"

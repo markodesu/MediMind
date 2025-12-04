@@ -40,14 +40,9 @@ async def chat(request: ChatRequest):
     # Model call with history
     response, confidence = generate_response(user_message, history)
     
-    # Safety check - low confidence redirects to UCA medical services
-    if confidence < settings.CONFIDENCE_THRESHOLD:
-        return ChatResponse(
-            answer=f"I'm not fully confident in my assessment. {get_uca_medical_contact()}",
-            confidence=confidence,
-            safe=False
-        )
-    
+    # Showcase model intelligence - return all model responses
+    # Only redirect for urgent cases (handled by should_redirect_to_doctor above)
+    # Low confidence is OK - we want to show the model's capabilities
     return ChatResponse(
         answer=response,
         confidence=confidence,

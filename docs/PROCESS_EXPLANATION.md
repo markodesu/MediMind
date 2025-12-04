@@ -326,9 +326,10 @@ confidence = max(0.2, min(confidence, 0.75))
 
 ### Confidence Threshold
 
-- **Threshold**: 0.6
-- **Below 0.6**: Routes to Dr. Kyal
-- **Above 0.6**: Returns AI response
+- **Threshold**: 0.3 (30%)
+- **Purpose**: Determines the `safe` flag in API responses
+- **Safety**: Urgent cases are redirected before model inference (not based on confidence)
+- **Rationale**: Lowered to showcase model capabilities while maintaining multi-layered safety
 
 ### Example Confidence Calculations
 

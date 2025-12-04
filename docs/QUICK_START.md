@@ -32,7 +32,7 @@ Create `backend/.env`:
 
 ```env
 MODEL_NAME=microsoft/phi-2
-CONFIDENCE_THRESHOLD=0.5
+CONFIDENCE_THRESHOLD=0.3
 UCA_MEDICAL_CONTACT_NAME=Dr. Kyal
 UCA_MEDICAL_PHONE=+996XXXXXXXXX  # Set your actual phone number here
 UCA_MEDICAL_LOCATION=1st floor, Academic Block, near GYM

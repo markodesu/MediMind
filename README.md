@@ -2,15 +2,15 @@
 
 **University of Central Asia (UCA) - Medical Guidance System**
 
-MediMind is an AI-powered health guidance chatbot designed for UCA students and staff. When the system has low confidence in its response, it routes users to UCA’s medical services with clear contact details.
+MediMind is an AI-powered health guidance chatbot designed for UCA students and staff. The system uses a multi-layered safety approach: urgent cases are automatically redirected to UCA's medical services, while general health questions are handled by the AI with confidence scoring and safety checks.
 
 ### 🤖 Intelligent Features
 
 MediMind implements **3 intelligent behaviors**:
 
-1. **✅ Language Understanding / Generation** – Natural language processing with the `microsoft/phi-2` model (with optional LoRA fine-tuning)
-2. **✅ Decision-Making** – Confidence-based routing to human professionals (UCA medical staff)
-3. **✅ Prediction / Recommendation** – Medical advice suggestions with confidence scoring and safety checks
+1. **✅ Language Understanding / Generation** – Natural language processing with the `microsoft/phi-2` model (with optional LoRA fine-tuning), supporting context-aware conversations
+2. **✅ Decision-Making** – Multi-layered safety system: urgent case detection, confidence-based routing, and safety flags for low-confidence responses
+3. **✅ Prediction / Recommendation** – Medical advice suggestions with multi-factor confidence scoring (response quality, medical relevance, danger detection)
 
 **📖 [Detailed Intelligent Features](docs/INTELLIGENT_FEATURES.md)** – Full explanation with code evidence.
 
@@ -134,14 +134,14 @@ Storage for AI model weights and configuration files. Use Git LFS for large mode
    ```env
    # Base model
    MODEL_NAME=microsoft/phi-2
-   CONFIDENCE_THRESHOLD=0.5
+   CONFIDENCE_THRESHOLD=0.3  # Lowered to showcase model capabilities while maintaining safety
 
    # Optional LoRA fine-tuned model
    # LORA_MODEL_PATH=./models/medimind-phi2-lora
 
    # UCA medical contact details used when routing to human care
    UCA_MEDICAL_CONTACT_NAME=Dr. Kyal
-   UCA_MEDICAL_PHONE=+996XXXXXXXXX  # Set your actual phone number here
+   UCA_MEDICAL_PHONE=+996XXXXXXXXX  # Set your actual phone number here (not committed to Git)
    UCA_MEDICAL_LOCATION=1st floor, Academic Block, near GYM
 
    # API metadata (optional)
@@ -184,5 +184,17 @@ python -m app.verify_intelligent_features
 
 This script verifies:
 - ✅ Language Understanding / Generation  
-- ✅ Decision-Making (confidence routing)  
-- ✅ Prediction / Recommendation  
+- ✅ Decision-Making (confidence routing and urgent case detection)  
+- ✅ Prediction / Recommendation
+
+## Safety Features
+
+MediMind implements a **multi-layered safety approach**:
+
+1. **Pre-filtering**: Urgent keywords (severe, emergency, chest pain, bleeding, etc.) trigger immediate doctor referral before model inference
+2. **Model Safety Instructions**: System prompts explicitly instruct the model to avoid diagnoses and prescriptions
+3. **Confidence Scoring**: Multi-factor algorithm that penalizes dangerous keywords and rewards medical relevance
+4. **Safety Flags**: All responses include a `safe` boolean field based on confidence threshold (0.3)
+5. **Post-processing**: Removes explicit dosages and prescription language
+
+The confidence threshold of 0.3 allows the model to showcase its capabilities while maintaining safety through these multiple layers.  
